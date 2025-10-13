@@ -11,8 +11,8 @@ from A2helpers import plotModel, plotAdjModel, plotDualModel, polyKernel, genera
 def _plotCls():
 
 	n = 100
-	lamb = 0.01
-	gen_model = 1
+	lamb = 0.001
+	gen_model = 2
 	kernel_func = lambda X1, X2: polyKernel(X1, X2, 2)
 
 	# Generate data
@@ -20,14 +20,14 @@ def _plotCls():
 
 	# Learn and plot results
 	# Primal
-	w, w0 = A2codes.minHinge(Xtrain, ytrain, lamb)
-	plotModel(Xtrain, ytrain, w, w0, A2codes.classify)
+	# w, w0 = A2codes.minHinge(Xtrain, ytrain, lamb)
+	# plotModel(Xtrain, ytrain, w, w0, A2codes.classify)
 	# Adjoint
 	a, a0 = A2codes.adjHinge(Xtrain, ytrain, lamb, kernel_func)
 	plotAdjModel(Xtrain, ytrain, a, a0, kernel_func, A2codes.adjClassify)
 	# Dual
-	a, b = A2codes.dualHinge(Xtrain, ytrain, lamb, kernel_func)
-	plotDualModel(Xtrain, ytrain, a, b, lamb, kernel_func, A2codes.dualClassify)
+	# a, b = A2codes.dualHinge(Xtrain, ytrain, lamb, kernel_func)
+	# plotDualModel(Xtrain, ytrain, a, b, lamb, kernel_func, A2codes.dualClassify)
 
 
 if __name__ == "__main__":
