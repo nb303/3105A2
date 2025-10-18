@@ -5,15 +5,15 @@
 #       This script is not meant to be thorough (it does not call all your functions).
 #       We will use a different script to test your codes. 
 import A2codes as A2codes
-from A2helpers import plotModel, plotAdjModel, plotDualModel, polyKernel, generateData
+from A2helpers import plotModel, plotAdjModel, plotDualModel, polyKernel, generateData, gaussKernel
 
 
 def _plotCls():
 
 	n = 100
 	lamb = 0.001
-	gen_model = 2
-	kernel_func = lambda X1, X2: polyKernel(X1, X2, 2)
+	gen_model = 3
+	kernel_func = lambda X1, X2: gaussKernel(X1, X2, 0.5)
 
 	# Generate data
 	Xtrain, ytrain = generateData(n=n, gen_model=gen_model)

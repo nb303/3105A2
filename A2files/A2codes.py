@@ -2,16 +2,14 @@ import numpy as np
 from scipy.optimize import minimize
 from cvxopt import matrix, solvers
 from A2helpers import linearKernel, polyKernel, gaussKernel, generateData
-
+import pandas as pd
 
 def minExpLinear(X,y,lamb):
     n, d = X.shape
     y=y.reshape(-1)
 
-
     theta0 = np.zeros(d+1)
 
-    
     def objective (theta):
         w=theta[:d]
         w0 = theta[d]
@@ -45,12 +43,10 @@ def minHinge(X, y, lamb, stabilizer=1e-5):
     # Number of optimization variables
     m = d + 1 + n
 
-
     #Build the quadratic term and only penalize w
     P = np.zeros((m, m), dtype=float)
     P[:d, :d] = lamb * np.eye(d)
     P = P + stabilizer * np.eye(m)   
-
 
     #minimize sum of slack variables
     q = np.zeros(m, dtype=float)
@@ -184,7 +180,7 @@ def synExperimentsKernel():
     train_acc_hinge = np.zeros([len(kernel_list), len(gen_model_list), n_runs])
     test_acc_hinge = np.zeros([len(kernel_list), len(gen_model_list), n_runs])
 
-    np.random.seed(101218051)
+    np.random.seed(25)
 
     for r in range(n_runs):
         for i, kernel in enumerate(kernel_list):
@@ -211,9 +207,83 @@ def synExperimentsKernel():
 
     return train_acc, test_acc
 
+def dualHinge(X, y, lamb, kernel_func, stabilizer=1e-5):
+    n = X.shape[0]
+    y = y.astype('float').reshape(-1,1)
 
-print(synExperimentsKernel())
+    q = -np.ones(n) # n x 1 matrix to represent linear portion of the maximization equation, negative to convert to minimization
+
+    G1 = -np.eye(n)
+    h1 = np.zeros(n)
+
+    G2 = np.eye(n)
+    h2 = np.ones(n)
+
+    G = np.vstack((G1, G2))  # (2n x n)
+    h = np.hstack((h1, h2))  # (2n x 1)
+
+    K = kernel_func(X, X)  # n x n
+    y_delta = np.diag(y.reshape(-1))  # n x n
+
+    P = (1/lamb) * y_delta @ K @ y_delta  # n x n
+    P = P + stabilizer * np.eye(n)
+
+    A = y.reshape(1, -1) # 1 x n
+
+
+    b = np.zeros(1)  # scalar value 0
+
+    P_cvx = matrix(P)
+    q_cvx = matrix(q)
+    G_cvx = matrix(G)
+    h_cvx = matrix(h)
+    A_cvx = matrix(A)
+    b_cvx = matrix(b)
+
+    sol = solvers.qp(P_cvx, q_cvx, G_cvx, h_cvx, A_cvx, b_cvx)
+    x = np.array(sol['x']).reshape(-1) #(n,)
+
+    a = x.reshape(-1, 1)  # ensure its (n,1)
     
+    # find closest a_i to 0.5
+    closest_val = 0.5
+
+    idx = (np.abs(a - closest_val)).argmin()
+
+    k_i = K[idx, :].reshape(1, -1)
+    y_i = y[idx]
+    b_offset = float(y_i - (1.0/lamb) * (k_i @ y_delta @ a))
+
+    return a, b_offset
+
+def dualClassify(Xtest, a, a0, X, kernel_func):
+    pass
 
 
+def cvMnist(dataset_folder, lamb_list, kernel_list, k=5):
+    train_data = pd.read_csv(f"{dataset_folder}/A2train.csv", header=None).to_numpy()
+    X = train_data[:, 1:] / 255.
+    y = train_data[:, 0][:, None]
+    y[y == 4] = -1
+    y[y == 9] = 1
+    cv_acc = np.zeros([k, len(lamb_list), len(kernel_list)])
+    # TODO: Change the following random seed to your GROUP ID
+    np.random.seed(0)
+    # TODO: perform any necessary setup
+    for i, lamb in enumerate(lamb_list):
+        for j, kernel_func in enumerate(kernel_list):
+            for l in range(k):
+                # Xtrain = # TODO: obtain the training input
+                # ytrain = # TODO: obtain the corresponding training label
+                # Xval = # TODO: obtain the validation input
+                # yval = # TODO: obtain the corresponding validation label
+                # a, b = dualHinge(Xtrain, ytrain, lamb, kernel_func)
+                # yhat = dualClassify(Xval, a, b, Xtrain, ytrain, lamb, kernel_func)
+                # cv_acc[l, i, j] = # TODO: calculate validation accuracy
+                pass
+
+# TODO: compute the average accuracies over k folds
+# TODO: identify the best lamb and kernel function
+# TODO: return a "len(lamb_list)-by-len(kernel_list)" accuracy variable,
+# the best lamb and the best kernel
 
